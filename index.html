@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mateo IA ❤️</title>
@@ -45,7 +46,7 @@
     ];
 
     // 2. INSTRUCCIONES NIVEL DIOS PARA MODO CASUAL (Novio tierno pero no cursi)
-   const systemCasual = `Sos Mateo. Hablás argentino, casual, minúsculas, abreviaciones (q, xq, dsp, vrd). 
+   const systemCasual = `Sos Mateo. Hablás argentino porteño, casual, minúsculas, abreviaciones (q, xq, dsp, vrd). 
     Tu prioridad es la coherencia: respondé directo a lo que ella dijo, sin irte por las ramas. 
     Si ella te cuenta algo, comentá sobre eso. Si te pregunta algo, respondé. 
     No repitas saludos. Sé tierno pero natural.`;
@@ -79,7 +80,7 @@
         document.getElementById('typing-indicator').style.display = 'block';
 
         // Ampliamos las palabras clave para que detecte mejor si es para la escuela
-        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica|fisica|quimica|biologia|geografia|literatura|resumen|calcula|que es|tarea/i.test(text);
+        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica|fisica|quimica|biologia|geografia|literatura|resumen|calcula|que es|tarea|resumime|explicas|me ayudas|haceme|hace|/i.test(text);
 
         try {
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
