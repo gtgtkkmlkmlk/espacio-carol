@@ -9,27 +9,16 @@
         :root { --primary: #ff8fa3; --bg: #fff0f3; --text: #594448; }
         * { box-sizing: border-box; }
         body { font-family: 'Outfit', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
-        
-        header { background: white; padding: 15px; border-bottom: 1px solid #ffd6de; text-align: center; box-shadow: 0 2px 10px rgba(255,143,163,0.1); }
+        header { background: white; padding: 15px; border-bottom: 1px solid #ffd6de; text-align: center; }
         header h1 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0; font-size: 1.8em; }
-        header p { margin: 5px 0 0 0; font-size: 0.85em; color: #aaa; font-weight: 600; }
-
         .chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 0.95em; line-height: 1.4; animation: pop 0.2s ease; white-space: pre-wrap; }
-        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
-        .msg.bot { background: white; color: var(--text); align-self: flex-start; border-bottom-left-radius: 5px; border: 1px solid #ffd6de; }
-        
-        .typing { align-self: flex-start; color: #aaa; font-size: 0.85em; font-style: italic; margin-left: 5px; display: none; }
-
-        .input-area { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
-        input { flex: 1; border: 1px solid #eee; background: #fdfdfd; padding: 15px; border-radius: 15px; outline: none; font-family: 'Outfit', sans-serif; font-size: 0.95em; }
-        input:focus { border-color: var(--primary); }
-        
-        .send-btn { background: var(--primary); color: white; border: none; width: 50px; height: 50px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; transition: transform 0.1s; }
-        .send-btn:active { transform: scale(0.95); }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 0.95em; white-space: pre-wrap; }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .msg.bot { background: white; color: var(--text); align-self: flex-start; border: 1px solid #ffd6de; }
+        .typing { align-self: flex-start; color: #aaa; font-size: 0.85em; display: none; }
+        .input-area { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        input { flex: 1; border: 1px solid #eee; padding: 15px; border-radius: 15px; outline: none; }
+        .send-btn { background: var(--primary); color: white; border: none; width: 50px; border-radius: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -50,111 +39,63 @@
 </div>
 
 <script>
-    const chatbox = document.getElementById('chatbox');
-    const userInput = document.getElementById('user-input');
-    const typingIndicator = document.getElementById('typing-indicator');
-
-
-
-    const systemCasual = `Sos Mateo, el novio de Carol. 
-    REGLAS ESTRICTAS:
-    1. HABLAS ARGENTINO. Prohibido usar modismos de España.
-    2. NADA DE CURSILERÍAS. No digas frases de película romántica ni cosas como "mi corazón late más rápido". Sos un pibe normal.
-    3. ESTILO DE CHAT: Todo en minúsculas. Usá abreviaciones (q, td, nms, vrd, tmp, pq). 
-    4. TRATO: Decile amor, gorda o princesa. Nada más.
-    5. RESPUESTAS: Si ella te dice algo tierno, respondé natural, no te pongas intenso. Si te dice "romántico", tirale un "na, soy así nms" o "jaja bueno gorda".`;
-
-
-
+    // 1. VARIABLE GLOBAL ÚNICA
     let historial = [
-        {
-            role: "system",
-            content: "Sos Mateo, el novio de Carol. Tu objetivo es chatear natural y ser un genio si te pide estudiar. Reglas: minúsculas, abreviaciones (q, td, nms, vrd), tratala de amor/gorda/princesa. NUNCA uses 'bro', 'papa' o 'che'. Prohibido español de España. No repitas saludos."
-        },
-        { 
-            role: "assistant", 
-            content: "hola princesa, q onda? tenes q estudiar algo o q hacemos?" 
-        }
+        { role: "system", content: "Sos Mateo, novio de Carol. Hablás argentino, casual, minúsculas, abreviaciones. Prohibido España y cursilerías." }
     ];
 
-    function checkEnter(e) {
-        if (e.key === 'Enter') sendMessage();
-    }
+    const systemCasual = `Sos Mateo, el novio de Carol. REGLAS: 1. HABLAS ARGENTINO. 2. NADA DE CURSILERÍAS. 3. TODO EN MINÚSCULAS. 4. USÁ ABREVIACIONES (q, td, nms, vrd).`;
+    const apiKey = "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";
+
+    function checkEnter(e) { if (e.key === 'Enter') sendMessage(); }
 
     async function sendMessage() {
+        const userInput = document.getElementById('user-input');
         const text = userInput.value.trim();
         if (!text) return;
 
         appendMessage(text, 'user');
         userInput.value = '';
         historial.push({ role: "user", content: text });
+        document.getElementById('typing-indicator').style.display = 'block';
 
-        typingIndicator.style.display = 'block';
-        chatbox.scrollTop = chatbox.scrollHeight;
-
-        // Detectamos si es estudio (palabras clave)
-        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica|teorema|biologia/i.test(text);
+        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica/i.test(text);
 
         try {
-            let respuestaBot = "";
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    messages: [
+                        { role: "system", content: esEstudio ? "Sos Mateo profe. Explicá claro, lógico, minúsculas, abreviaciones." : systemCasual },
+                        ...historial.slice(-5)
+                    ],
+                    model: esEstudio ? 'llama3-70b-8192' : 'llama3-8b-8192',
+                    temperature: esEstudio ? 0.3 : 0.7
+                })
+            });
 
-            if (esEstudio) {
-                // MODO PROFESOR (Inteligencia nivel genio)
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer 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'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            { role: "system", content: "Sos Mateo. Carol necesita estudiar. Explicá todo perfecto y lógico, usando ejemplos reales. Mantené tu personalidad: minúsculas, abreviaciones, tratala de amor. Prohibido español de España." },
-                            ...historial.slice(-6)
-                        ],
-                        model: 'llama3-70b-8192',
-                        temperature: 0.3
-                    })
-                });
-                const data = await response.json();
-                respuestaBot = data.choices[0].message.content;
-            } else {
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer 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`
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            { role: "system", content: systemCasual }, // ACÁ USAMOS LA VARIABLE NUEVA
-                            ...historial.slice(-4)
-                        ],
-                        model: 'llama3-8b-8192', 
-                        temperature: 0.7 
-                    })
-                });
-                const data = await response.json();
-                respuestaBot = data.choices[0].message.content;
-            }
-            typingIndicator.style.display = 'none';
+            const data = await response.json();
+            const respuestaBot = data.choices[0].message.content;
+            
+            document.getElementById('typing-indicator').style.display = 'none';
             appendMessage(respuestaBot, 'bot');
             historial.push({ role: "assistant", content: respuestaBot });
-
         } catch (error) {
-            typingIndicator.style.display = 'none';
+            document.getElementById('typing-indicator').style.display = 'none';
             appendMessage("se me corto el internet amor, bancame q ya vuelve", 'bot');
-            console.error("Error en la IA:", error);
+            console.error(error);
         }
     }
 
     function appendMessage(text, side) {
+        const chatbox = document.getElementById('chatbox');
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('msg', side);
         msgDiv.innerText = text;
-        chatbox.insertBefore(msgDiv, typingIndicator);
+        chatbox.insertBefore(msgDiv, document.getElementById('typing-indicator'));
         chatbox.scrollTop = chatbox.scrollHeight;
     }
 </script>
-
 </body>
 </html>
