@@ -54,6 +54,8 @@
     const userInput = document.getElementById('user-input');
     const typingIndicator = document.getElementById('typing-indicator');
 
+
+
     const systemCasual = `Sos Mateo, el novio de Carol. 
     REGLAS ESTRICTAS:
     1. HABLAS ARGENTINO. Prohibido usar modismos de España.
@@ -61,6 +63,19 @@
     3. ESTILO DE CHAT: Todo en minúsculas. Usá abreviaciones (q, td, nms, vrd, tmp, pq). 
     4. TRATO: Decile amor, gorda o princesa. Nada más.
     5. RESPUESTAS: Si ella te dice algo tierno, respondé natural, no te pongas intenso. Si te dice "romántico", tirale un "na, soy así nms" o "jaja bueno gorda".`;
+
+
+
+    let historial = [
+        {
+            role: "system",
+            content: "Sos Mateo, el novio de Carol. Tu objetivo es chatear natural y ser un genio si te pide estudiar. Reglas: minúsculas, abreviaciones (q, td, nms, vrd), tratala de amor/gorda/princesa. NUNCA uses 'bro', 'papa' o 'che'. Prohibido español de España. No repitas saludos."
+        },
+        { 
+            role: "assistant", 
+            content: "hola princesa, q onda? tenes q estudiar algo o q hacemos?" 
+        }
+    ];
 
     function checkEnter(e) {
         if (e.key === 'Enter') sendMessage();
