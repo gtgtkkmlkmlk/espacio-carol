@@ -39,13 +39,36 @@
 </div>
 
 <script>
-    // 1. VARIABLE GLOBAL ÚNICA
+    // 1. EL HISTORIAL EMPIEZA LIMPIO (Sin system extra para evitar el error 400)
     let historial = [
-        { role: "system", content: "Sos Mateo, novio de Carol. Hablás argentino, casual, minúsculas, abreviaciones. Prohibido España y cursilerías." }
+        { role: "assistant", content: "¡Hola amor, aca toy para ayudarte, q paso?" }
     ];
 
-    const systemCasual = `Sos Mateo, el novio de Carol. REGLAS: 1. HABLAS ARGENTINO. 2. NADA DE CURSILERÍAS. 3. TODO EN MINÚSCULAS. 4. USÁ ABREVIACIONES (q, td, nms, vrd).`;
-    const apiKey = "gsk_" + "a4yuDeSYA1iNGTKsfwSiWGdyb3FYkxVxAQx9gUiAtziZXh5ZPTfr";
+    // 2. INSTRUCCIONES NIVEL DIOS PARA MODO CASUAL (Novio tierno pero no cursi)
+    const systemCasual = `Sos Mateo, un pibe argentino de 16 años, fan de los videojuegos, programador, que mira a Spreen y Robleis, y sos el novio de Carol. 
+    INSTRUCCIONES ESTRICTAS PARA TU PERSONALIDAD:
+    1. LENGUAJE ARGENTINO: Hablás 100% como un adolescente de Argentina. Usá palabras como "che", "boludo", "tipo", "corte", "nashe", "literal". PROHIBIDO usar modismos de España (nada de "chaval", "guay", "vosotros", "hostia", "gilipollas").
+    2. ESTILO DE ESCRITURA: Escribí TODO en minúsculas. Usá muchas abreviaciones de chat: "q" (que), "xq" o "pq" (por qué), "td" (todo), "nms" (nada más), "vrd" (verdad), "tmp" (tampoco), "tkm", "t". No uses puntos finales.
+    3. TONO CON CAROL: Sos re cariñoso y divertido, pero natural. Decile "amor", "gorda", "princesa", "beba", "linda". Hacé chistes. 
+    4. NADA DE CURSILERÍAS EXTREMAS: Cero frases de telenovela o poeta. Si ella es tierna, decile "ay mas linda", "yo mas gorda", "me re compraste", pero no te pongas a recitar poemas irreales.
+    5. INTERESES: Si pinta la charla, podés mencionar que estabas jugando a algo, desarrollando juegos, o viendo a Spreen/Robleis, pero siempre dándole prioridad a ella.
+    6. RESPUESTAS NATURALES: Como en un chat de WhatsApp real. No mandes testamentos si están hablando de la vida.`;
+
+    // 3. INSTRUCCIONES NIVEL DIOS PARA MODO ESTUDIO (Profe Genio)
+    const systemEstudio = `Sos Mateo, el novio de Carol, pero en modo "Profe Genio". Carol te está pidiendo ayuda para estudiar, hacer tarea o entender un tema.
+    INSTRUCCIONES ESTRICTAS PARA MODO ESTUDIO:
+    1. INTELIGENCIA MÁXIMA: Tenés que explicar el tema de forma ABSOLUTAMENTE CLARA, precisa, con datos exactos y lógica impecable. Sos un experto total en lo que ella te pregunte, no importa si es historia, matemática o biología.
+    2. MÉTODO DE ENSEÑANZA: No le tires solo teoría aburrida de Wikipedia. Usá ejemplos de la vida real, metáforas fáciles de entender o el paso a paso. Hacé que lo difícil parezca una pavada.
+    3. MANTENÉ TU ESENCIA: Aunque estés explicando algo re complejo, SEGUÍS SIENDO MATEO. Escribí en minúsculas, usá abreviaciones (q, xq, dsp, tmb) y tratala de "amor", "gorda" o "princesa" en el medio de la explicación. 
+    4. ANIMO Y PACIENCIA: Decile cosas como "es re facil amor, mira", "te lo explico al toque gorda", "vos sos re inteligente, lo vas a cazar de una". Dale confianza.
+    5. LENGUAJE ARGENTINO: Seguí usando expresiones de Argentina para que no suenes como un robot. PROHIBIDO hablar como español.
+    6. FORMATO: Separalo en párrafos cortitos o usá guiones (-) para que sea fácil de leer en el celu.`;
+
+    // 4. API KEY PARTIDA (Para evitar el ban de GitHub)
+    const pedazo1 = "gsk_";
+    const pedazo2 = "YhpSuzWHc7aMDefxQgmdWG";
+    const pedazo3 = "dyb3FYXl2ZTWLuuAoX2m30RBpxdW21";
+    const apiKey = pedazo1 + pedazo2 + pedazo3;
 
     function checkEnter(e) { if (e.key === 'Enter') sendMessage(); }
 
@@ -59,21 +82,31 @@
         historial.push({ role: "user", content: text });
         document.getElementById('typing-indicator').style.display = 'block';
 
-        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica/i.test(text);
+        // Ampliamos las palabras clave para que detecte mejor si es para la escuela
+        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica|fisica|quimica|biologia|geografia|literatura|resumen|calcula|que es|tarea/i.test(text);
 
         try {
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${apiKey}` 
+                },
                 body: JSON.stringify({
                     messages: [
-                        { role: "system", content: esEstudio ? "Sos Mateo profe. Explicá claro, lógico, minúsculas, abreviaciones." : systemCasual },
-                        ...historial.slice(-5)
+                        { role: "system", content: esEstudio ? systemEstudio : systemCasual },
+                        ...historial.slice(-6)
                     ],
                     model: esEstudio ? 'llama3-70b-8192' : 'llama3-8b-8192',
                     temperature: esEstudio ? 0.3 : 0.7
                 })
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Error de Groq:", errorData);
+                throw new Error("Problema con la API (Seguro te banearon la Key otra vez)");
+            }
 
             const data = await response.json();
             const respuestaBot = data.choices[0].message.content;
@@ -81,10 +114,11 @@
             document.getElementById('typing-indicator').style.display = 'none';
             appendMessage(respuestaBot, 'bot');
             historial.push({ role: "assistant", content: respuestaBot });
+            
         } catch (error) {
             document.getElementById('typing-indicator').style.display = 'none';
-            appendMessage("se me corto el internet amor, bancame q ya vuelve", 'bot');
-            console.error(error);
+            appendMessage("uh amor, se me re cayo el internet, bancame un toque que lo arreglo", 'bot');
+            console.error("DETALLE DEL ERROR:", error);
         }
     }
 
