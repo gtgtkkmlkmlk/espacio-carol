@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espacio de Carol ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #ff8fa3; --bg: #fff0f3; --text: #594448; }
+        body { font-family: 'Outfit', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
+        .screen { display: none; padding: 25px; animation: fadeIn 0.3s; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        h1 { font-family: 'Pacifico', cursive; color: var(--primary); text-align: center; font-size: 2em; }
+        .card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 15px; border: 1px solid #ffd6de; }
+        
+        input, textarea { width: 100%; border: none; background: #fdfdfd; padding: 15px; border-radius: 15px; margin-bottom: 10px; box-sizing: border-box; outline: none; border: 1px solid #eee; }
+        .btn { border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 5px; color: white; }
+        
+        .nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 10px 0; border-top: 1px solid #eee; }
+        .nav-btn { flex: 1; text-align: center; font-size: 0.75em; font-weight: 600; color: #aaa; cursor: pointer; }
+        
+        .info-box { font-size: 0.85em; color: #888; text-align: center; margin-top: 15px; background: #fff5f6; padding: 10px; border-radius: 10px; }
+        .grupo-btns { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- NOTAS -->
+<div id="screen-notas" class="screen active">
+    <h1>Mis Notas ❤️</h1>
+    <div id="lista-notas"></div>
+    <button class="btn" style="background:var(--primary)" onclick="limpiarForm(); showScreen('screen-nueva')">Nueva Nota +</button>
+</div>
+
+<!-- CREAR/EDITAR -->
+<div id="screen-nueva" class="screen">
+    <h1 id="form-titulo">Nueva Idea</h1>
+    <input type="text" id="titulo" placeholder="Título...">
+    <textarea id="contenido" rows="5" placeholder="Escribí acá..."></textarea>
+    <button class="btn" style="background:var(--primary)" onclick="guardar()">Guardar</button>
+    <button class="btn" style="background:#ccc" onclick="showScreen('screen-notas')">Volver</button>
+</div>
+
+<!-- LIBROS -->
+<div id="screen-libros" class="screen">
+    <h1>Biblioteca 📚</h1>
+    <input type="text" id="libro" placeholder="Nombre del libro...">
+    <button class="btn" style="background:#5fb0ff" onclick="buscarLibro()">Buscar PDF</button>
+</div>
+
+<!-- PELÍCULAS -->
+<div id="screen-peliculas" class="screen">
+    <h1>Películas 🎬</h1>
+    <input type="text" id="pelicula" placeholder="Nombre de la peli...">
+    <div class="grupo-btns">
+        <button class="btn" style="background:#27ae60" onclick="buscarMedia('pelicula', 'directo')">Ver directo 🚀</button>
+        <button class="btn" style="background:#f39c12" onclick="buscarMedia('pelicula', 'buscador')">Buscar 🔍</button>
+    </div>
+    <div class="info-box">
+        ¿Publicidad molesta? <br>
+        <button class="btn" style="background:#6c757d; font-size:0.8em; padding:8px" onclick="window.open('https://ublockorigin.com/', '_blank')">Instalar uBlock</button>
+    </div>
+</div>
+
+<!-- SERIES -->
+<div id="screen-series" class="screen">
+    <h1>Series 📺</h1>
+    <input type="text" id="serie" placeholder="Nombre de la serie...">
+    <div class="grupo-btns">
+        <button class="btn" style="background:#27ae60" onclick="buscarMedia('serie', 'directo')">Ver directo 🚀</button>
+        <button class="btn" style="background:#f39c12" onclick="buscarMedia('serie', 'buscador')">Buscar 🔍</button>
+    </div>
+    <div class="info-box">
+        ¿Publicidad molesta? <br>
+        <button class="btn" style="background:#6c757d; font-size:0.8em; padding:8px" onclick="window.open('https://ublockorigin.com/', '_blank')">Instalar uBlock</button>
+    </div>
+</div>
+
+<!-- NAVEGACIÓN -->
+<div class="nav-bar">
+    <div class="nav-btn" onclick="showScreen('screen-notas')">📝 Notas</div>
+    <div class="nav-btn" onclick="showScreen('screen-libros')">📚 Libros</div>
+    <div class="nav-btn" onclick="showScreen('screen-peliculas')">🎬 Pelis</div>
+    <div class="nav-btn" onclick="showScreen('screen-series')">📺 Series</div>
+</div>
+
+<script>
+    let notas = JSON.parse(localStorage.getItem('mis_notas_carol')) || [];
+    let editIndex = -1;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function limpiarForm() {
+        editIndex = -1;
+        document.getElementById('titulo').value = '';
+        document.getElementById('contenido').value = '';
+        document.getElementById('form-titulo').innerText = "Nueva Idea";
+    }
+
+    function render() {
+        const lista = document.getElementById('lista-notas');
+        lista.innerHTML = '';
+        notas.forEach((n, i) => {
+            lista.innerHTML += `
+                <div class="card">
+                    <div style="font-weight:600; cursor:pointer" onclick="this.nextElementSibling.style.display = (this.nextElementSibling.style.display === 'block') ? 'none' : 'block'">
+                        ${n.t} ▼
+                    </div>
+                    <div style="display:none; padding-top:10px;">
+                        ${n.c}<br><br>
+                        <button onclick="prepararEdicion(${i})" style="border:none; background:#fff0f3; color:var(--primary); padding:5px 10px; border-radius:8px;">✏️ Editar</button>
+                        <button onclick="borrar(${i})" style="border:none; background:#fff0f3; color:red; padding:5px 10px; border-radius:8px;">🗑️ Borrar</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function guardar() {
+        const t = document.getElementById('titulo').value;
+        const c = document.getElementById('contenido').value;
+        if(t && c) {
+            if(editIndex === -1) notas.push({t, c});
+            else notas[editIndex] = {t, c};
+            localStorage.setItem('mis_notas_carol', JSON.stringify(notas));
+            render();
+            showScreen('screen-notas');
+        }
+    }
+
+    function prepararEdicion(i) {
+        editIndex = i;
+        document.getElementById('titulo').value = notas[i].t;
+        document.getElementById('contenido').value = notas[i].c;
+        document.getElementById('form-titulo').innerText = "Editar Nota";
+        showScreen('screen-nueva');
+    }
+
+    function borrar(i) {
+        notas.splice(i, 1);
+        localStorage.setItem('mis_notas_carol', JSON.stringify(notas));
+        render();
+    }
+
+    function buscarLibro() {
+        const q = document.getElementById('libro').value;
+        if(q) window.open('https://duckduckgo.com/?q=' + encodeURIComponent(q + ' filetype:pdf') + '&ia=web', '_blank');
+    }
+
+    // Nueva función unificada para pelis y series
+    function buscarMedia(tipo, modo) {
+        const inputId = (tipo === 'pelicula') ? 'pelicula' : 'serie';
+        const val = document.getElementById(inputId).value;
+        if (!val) return;
+
+        let url = "";
+        const slug = val.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        
+        if (modo === 'directo') {
+            // Ajustado: usa /peliculas/ para pelis y /serie/ para series
+            const path = (tipo === 'pelicula') ? 'peliculas' : 'series';
+            url = `https://cuevana-4.com//${path}/${slug}`;
+        } else {
+            url = `https://www.cuevana8.plus/search?q=${encodeURIComponent(val)}`;
+        }
+        window.open(url, '_blank');
+    }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+  }
+    render();
+</script>
+</body>
+</html>
