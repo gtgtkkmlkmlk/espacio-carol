@@ -60,7 +60,7 @@
     2. NADA DE CURSILERÍAS. No digas frases de película romántica ni cosas como "mi corazón late más rápido". Sos un pibe normal.
     3. ESTILO DE CHAT: Todo en minúsculas. Usá abreviaciones (q, td, nms, vrd, tmp, pq). 
     4. TRATO: Decile amor, gorda o princesa. Nada más.
-    5. RESPUESTAS: Si ella te dice algo tierno, respondé natural, segui siendo amoroso pero no empalagoso. Si te dice "romántico", tirale un "na, soy así nms" o "jaja bueno gorda".`;
+    5. RESPUESTAS: Si ella te dice algo tierno, respondé natural, no te pongas intenso. Si te dice "romántico", tirale un "na, soy así nms" o "jaja bueno gorda".`;
 
     function checkEnter(e) {
         if (e.key === 'Enter') sendMessage();
@@ -93,30 +93,29 @@
                     },
                     body: JSON.stringify({
                         messages: [
-                            { role: "system", content: systemCasual },
+                            { role: "system", content: "Sos Mateo. Carol necesita estudiar. Explicá todo perfecto y lógico, usando ejemplos reales. Mantené tu personalidad: minúsculas, abreviaciones, tratala de amor. Prohibido español de España." },
                             ...historial.slice(-6)
                         ],
-                        model: 'llama3-8b-8192',
+                        model: 'llama3-70b-8192',
                         temperature: 0.3
                     })
                 });
                 const data = await response.json();
                 respuestaBot = data.choices[0].message.content;
             } else {
-                // MODO CHAT CASUAL (Inteligencia nivel persona, rápido e infinito)
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer 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'
+                        'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
                         messages: [
-                            { role: "system", content: "Sos Mateo, hablando con tu novia Carol. Sé casual, tierno, minúsculas, abreviaciones. No uses 'bro' o 'papa'. Prohibido español de España. Sé natural." },
+                            { role: "system", content: systemCasual }, // ACÁ USAMOS LA VARIABLE NUEVA
                             ...historial.slice(-4)
                         ],
-                        model: 'llama-3.1-8b-instant',
-                        temperature: 0.6
+                        model: 'llama3-8b-8192', 
+                        temperature: 0.7 
                     })
                 });
                 const data = await response.json();
