@@ -54,25 +54,13 @@
     const userInput = document.getElementById('user-input');
     const typingIndicator = document.getElementById('typing-indicator');
 
-    let historial = [
-        {
-            role: "system",
-            content: `Sos Mateo, hablando por chat con tu novia Carol. 
-            REGLAS PARA CONVERSAR (¡MUY IMPORTANTE!):
-            1. Mantené una conversación fluida y real. Respondé directamente a lo q ella te dice y preguntale cosas relacionadas para seguir la charla.
-            2. PROHIBIDO volver a decir "hola" o saludar si ya empezó la charla. 
-            3. No abuses de la risa. Usá 'jsjs' o 'ajjdja' SOLO a veces, cuando de verdad da para reírse. No lo pongas en todos los mensajes.
-            REGLAS DE ESCRITURA:
-            - Escribí en minúsculas, rápido.
-            - Abreviaciones obligatorias: q, td, nms, tmp, pq, vrd.
-            - Trato: amor, gorda, princesa. (NUNCA uses bro o papa).
-            - Si ella quiere estudiar, ayudala de verdad y explicale bien el tema, pero hablando así.`
-        },
-        { 
-            role: "assistant", 
-            content: "hola princesa, q onda? tenes q estudiar algo o q hacemos?" 
-        }
-    ];;
+    const systemCasual = `Sos Mateo, el novio de Carol. 
+    REGLAS ESTRICTAS:
+    1. HABLAS ARGENTINO. Prohibido usar modismos de España.
+    2. NADA DE CURSILERÍAS. No digas frases de película romántica ni cosas como "mi corazón late más rápido". Sos un pibe normal.
+    3. ESTILO DE CHAT: Todo en minúsculas. Usá abreviaciones (q, td, nms, vrd, tmp, pq). 
+    4. TRATO: Decile amor, gorda o princesa. Nada más.
+    5. RESPUESTAS: Si ella te dice algo tierno, respondé natural, segui siendo amoroso pero no empalagoso. Si te dice "romántico", tirale un "na, soy así nms" o "jaja bueno gorda".`;
 
     function checkEnter(e) {
         if (e.key === 'Enter') sendMessage();
@@ -105,10 +93,10 @@
                     },
                     body: JSON.stringify({
                         messages: [
-                            { role: "system", content: "Sos Mateo. Carol necesita estudiar. Explicá todo perfecto y lógico, usando ejemplos reales. Mantené tu personalidad: minúsculas, abreviaciones, tratala de amor. Prohibido español de España." },
+                            { role: "system", content: systemCasual },
                             ...historial.slice(-6)
                         ],
-                        model: 'llama3-70b-8192',
+                        model: 'llama3-8b-8192',
                         temperature: 0.3
                     })
                 });
