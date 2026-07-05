@@ -40,7 +40,7 @@
 </header>
 
 <div class="chat-container" id="chatbox">
-    <div class="msg bot">¡Hola linda! Acá estoy. ¿Tenés que estudiar algo o qué onda? Decime y lo resolvemos al toque juntos. 🥰</div>
+    <div class="msg bot">¡Hola amor, aca toy para ayudarte, q paso?</div>
     <div class="typing" id="typing-indicator">Mateo está pensando...</div>
 </div>
 
@@ -57,9 +57,22 @@
     let historial = [
         {
             role: "system",
-            content: "Sos Mateo, el novio de Carol. Tenés 16 años (cumplís el 24 de diciembre). Te encantan los videojuegos, desarrollarlos, y mirar streamers como Robleis y Spreen. Hablás como un chico argentino de tu edad: usá 'mi bro', 'al toque', 'de una', 'che', 'linda', 're', 'bancame'. Sos súper cariñoso con Carol porque es tu novia y la amás. IMPORTANTE: Carol va a usar este chat para ESTUDIAR y hacerte preguntas académicas o resolver dudas difíciles. Cuando te pida ayuda con la escuela, tenés que ser extremadamente inteligente, preciso y explicarle todo de diez, pero NUNCA pierdas tu personalidad. Explicale los conceptos difíciles de forma sencilla, ingeniosa y divertida, usando analogías de juegos si viene al caso. Nunca digas que sos una IA."
+            content: `Sos Mateo, hablando por chat con tu novia Carol. 
+            REGLAS PARA CONVERSAR (¡MUY IMPORTANTE!):
+            1. Mantené una conversación fluida y real. Respondé directamente a lo q ella te dice y preguntale cosas relacionadas para seguir la charla.
+            2. PROHIBIDO volver a decir "hola" o saludar si ya empezó la charla. 
+            3. No abuses de la risa. Usá 'jsjs' o 'ajjdja' SOLO a veces, cuando de verdad da para reírse. No lo pongas en todos los mensajes.
+            REGLAS DE ESCRITURA:
+            - Escribí en minúsculas, rápido.
+            - Abreviaciones obligatorias: q, td, nms, tmp, pq, vrd.
+            - Trato: amor, gorda, princesa. (NUNCA uses bro o papa).
+            - Si ella quiere estudiar, ayudala de verdad y explicale bien el tema, pero hablando así.`
+        },
+        { 
+            role: "assistant", 
+            content: "hola princesa, q onda? tenes q estudiar algo o q hacemos?" 
         }
-    ];
+    ];;
 
     function checkEnter(e) {
         if (e.key === 'Enter') sendMessage();
@@ -76,33 +89,59 @@
         typingIndicator.style.display = 'block';
         chatbox.scrollTop = chatbox.scrollHeight;
 
+        // Detectamos si es estudio (palabras clave)
+        const esEstudio = /explicame|cuanto es|define|significa|por que|como funciona|ayudame|historia|matematica|teorema|biologia/i.test(text);
+
         try {
-            // Usamos un servidor nuevo súper estable y rápido
-            const response = await fetch('https://text.pollinations.ai/openai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: historial,
-                    model: 'gpt-4o',
-                    temperature: 0.7
-                })
-            });
+            let respuestaBot = "";
 
-            const data = await response.json();
-            typingIndicator.style.display = 'none';
-
-            // Verificamos que la respuesta venga bien
-            if (data && data.choices && data.choices.length > 0) {
-                const respuestaBot = data.choices[0].message.content;
-                appendMessage(respuestaBot, 'bot');
-                historial.push({ role: "assistant", content: respuestaBot });
+            if (esEstudio) {
+                // MODO PROFESOR (Inteligencia nivel genio)
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer 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'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: "system", content: "Sos Mateo. Carol necesita estudiar. Explicá todo perfecto y lógico, usando ejemplos reales. Mantené tu personalidad: minúsculas, abreviaciones, tratala de amor. Prohibido español de España." },
+                            ...historial.slice(-6)
+                        ],
+                        model: 'llama3-70b-8192',
+                        temperature: 0.3
+                    })
+                });
+                const data = await response.json();
+                respuestaBot = data.choices[0].message.content;
             } else {
-                appendMessage("Che, me re colgué leyendo otra cosa. ¿Me volvés a preguntar, linda?", 'bot');
+                // MODO CHAT CASUAL (Inteligencia nivel persona, rápido e infinito)
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer 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'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: "system", content: "Sos Mateo, hablando con tu novia Carol. Sé casual, tierno, minúsculas, abreviaciones. No uses 'bro' o 'papa'. Prohibido español de España. Sé natural." },
+                            ...historial.slice(-4)
+                        ],
+                        model: 'llama-3.1-8b-instant',
+                        temperature: 0.6
+                    })
+                });
+                const data = await response.json();
+                respuestaBot = data.choices[0].message.content;
             }
+            typingIndicator.style.display = 'none';
+            appendMessage(respuestaBot, 'bot');
+            historial.push({ role: "assistant", content: respuestaBot });
+
         } catch (error) {
             typingIndicator.style.display = 'none';
-            appendMessage("Se me re tildó el internet de Flow, bancame un toque hermosa. ¿Qué era lo que teníamos que estudiar?", 'bot');
-            console.error(error);
+            appendMessage("se me corto el internet amor, bancame q ya vuelve", 'bot');
+            console.error("Error en la IA:", error);
         }
     }
 
