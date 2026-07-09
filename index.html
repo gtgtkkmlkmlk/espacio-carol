@@ -41,7 +41,20 @@
 
 <script>
     // 1. EL HISTORIAL EMPIEZA LIMPIO (Sin system extra para evitar el error 400)
-    let historial = [];
+    let historial = JSON.parse(
+    localStorage.getItem("mateo_historial")
+) || [];
+
+
+    // =======================
+    // MEMORIA
+    // =======================
+
+    let memoria = JSON.parse(localStorage.getItem("mateo_memoria")) || [];
+
+    function guardarMemoria() {
+    localStorage.setItem("mateo_memoria", JSON.stringify(memoria));
+    }
 
     // 2. INSTRUCCIONES NIVEL DIOS PARA MODO CASUAL (Novio tierno pero no cursi)
    const systemCasual = `Sos Mateo, el novio de Carol. siempre estas hablando con ella Respondé como un pibe argentino, relajado y natural, como si estuvieras chateando con tu novia. No seas cursi ni demasiado formal. Usá expresiones de Argentina y mantené un tono divertido y cercano.   
@@ -58,7 +71,18 @@ Nunca digas: vale, tío, vosotros, móvil, ordenador.
 Las respuestas tienen que sentirse naturales, espontáneas y relajadas.
 No hagas listas largas salvo que realmente hagan falta.
 Si el usuario habla de estudiar, explicá claro pero sin perder tu forma de hablar.
-No inventes información y priorizá ser útil.`;
+No inventes información y priorizá ser útil.
+Recuerdos sobre Carol:
+
+${memoria
+    .sort((a,b)=>b.importancia-a.importancia)
+    .slice(-20)
+    .map(m=>"• "+m.texto)
+    .join("\n")}
+
+Nunca contradigas estos recuerdos.
+Si alguno ayuda a responder, usalo naturalmente.
+`;
 
     // 3. INSTRUCCIONES NIVEL DIOS PARA MODO ESTUDIO (Profe Genio)
     const systemEstudio = `Sos Mateo, el novio de Carol, pero en modo "Profe Genio". Carol te está pidiendo ayuda para estudiar, hacer tarea o entender un tema.
@@ -78,6 +102,122 @@ No inventes información y priorizá ser útil.`;
 
     function checkEnter(e) { if (e.key === 'Enter') sendMessage(); }
 
+
+    function recordar(texto) {
+
+        const palabrasImportantes = [
+
+            "me gusta",
+            "amo",
+            "odio",
+            "cumplo",
+            "cumple",
+            "mañana",
+            "hoy",
+            "examen",
+            "prueba",
+            "parcial",
+            "snoopy",
+            "tulipan",
+            "tulipán",
+            "mamá",
+            "papá",
+            "hermana",
+            "hermano",
+            "amiga",
+            "amigo",
+            "novio",
+            "novia",
+            "perro",
+            "gata",
+            "gato",
+            "cumpleaños"
+
+    ];
+
+    const textoMin = texto.toLowerCase();
+
+    if (palabrasImportantes.some(p => textoMin.includes(p))) {
+
+        if (!memoria.includes(texto)) {
+
+            memoria.push(texto);
+
+            if (memoria.length > 60)
+                memoria.shift();
+
+            guardarMemoria();
+
+        }
+
+    }
+
+}
+
+
+    async function extraerRecuerdo(texto) {
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+
+        body: JSON.stringify({
+
+            model: "llama-3.3-70b-versatile",
+
+            temperature: 0,
+
+            messages: [
+
+                {
+                    role: "system",
+                    content:
+`Tu trabajo NO es conversar.
+
+Solo decidí si hay algo importante para recordar sobre Carol.
+
+Si NO hay nada importante respondé EXACTAMENTE:
+
+NINGUNO
+
+Si SÍ hay algo importante respondé con UNA sola oración corta.
+
+Ejemplos:
+
+Tiene examen de historia mañana.
+
+Le gustan los tulipanes.
+
+Su perro se llama Rocky.
+
+Está preocupada por su mamá.
+
+No expliques nada más.`
+                },
+
+                {
+                    role: "user",
+                    content: texto
+                }
+
+            ]
+
+        })
+
+    });
+
+    const data = await response.json();
+
+    return data.choices[0].message.content.trim();
+
+}
+
+
     async function sendMessage() {
         const userInput = document.getElementById('user-input');
         const text = userInput.value.trim();
@@ -86,6 +226,46 @@ No inventes información y priorizá ser útil.`;
         appendMessage(text, 'user');
         userInput.value = '';
         historial.push({ role: "user", content: text });
+        const mensajeImportante =
+/mañana|hoy|cumple|cumplo|examen|prueba|parcial|me gusta|amo|odio|quiero|sueño|triste|feliz|ansiedad|miedo|familia|mamá|papá|hermana|amiga|snoopy|tulipan|perro|gato/i
+.test(text);
+
+if (mensajeImportante) {
+
+    try {
+
+        const recuerdo = await extraerRecuerdo(text);
+
+        if (
+            recuerdo !== "NINGUNO" &&
+            !memoria.some(m => m.texto === recuerdo)
+        ) {
+
+            memoria.push({
+
+                texto: recuerdo,
+
+                fecha: Date.now(),
+
+                importancia: 5
+
+            });
+
+            localStorage.setItem(
+                "mateo_memoria",
+                JSON.stringify(memoria)
+            );
+
+        }
+
+    } catch (e) {
+
+        console.log(e);
+
+    }
+
+}
+        recordar(text);
         document.getElementById('typing-indicator').style.display = 'block';
 
         // Ampliamos las palabras clave para que detecte mejor si es para la escuela
@@ -122,6 +302,10 @@ No inventes información y priorizá ser útil.`;
             appendMessage(respuestaBot, 'bot');
             historial.push({ role: "assistant", content: respuestaBot });
             
+            localStorage.setItem(
+                "mateo_historial",
+                JSON.stringify(historial.slice(-25))
+);
         } catch (error) {
             document.getElementById('typing-indicator').style.display = 'none';
             appendMessage("uh amor, se me re cayo el internet, bancame un toque que lo arreglo", 'bot');
